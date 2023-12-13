@@ -9,34 +9,58 @@ The scenario which showcases where this app is useful:
 
 ```bash
 # start a database server
+docker run --rm --name=mongo mongo:7.0 mongod --bind_ip=0.0.0.0
 
 # upload a file to it, using mongofiles
+docker exec -it mongo /bin/bash
+
+echo "hello, World" > /tmp/testfile.txt
+mongofiles -d testdb put /tmp/testfile.txt
+
+mongofiles -d testdb list
 
 # backup the database using mongodump
+mongodump --gzip -d mydb
+
+             (output from script)
+             2023-12-13T15:09:12.866+0000    writing mydb.fs.chunks to dump/mydb/fs.chunks.bson.gz
+             2023-12-13T15:09:12.870+0000    done dumping mydb.fs.chunks (1 document)
+             2023-12-13T15:09:12.871+0000    writing mydb.fs.files to dump/mydb/fs.files.bson.gz
+             2023-12-13T15:09:12.872+0000    done dumping mydb.fs.files (1 document)
 
 # you now have historic files within the two files fs.files.bson.gz and fs.chunks.bson.gz.
+# take these to an environment without Mongo database, or where there is little desire to run mongorestore against it.
+# extract the files without mongo
+
+docker cp mongo:/dump /tmp
+
+# use our program to extract the files
+
+java -jar -c /tmp/dump/mydb/fs.chunks.bson.gz -f /tmp/dump/mydb/fs.files.bson.gz
+
+            (example output)
+            MATCHED: /tmp/testfile.txt (chunks: 1)
+
 ```
 
 In the Home Office we do not wish our production data to leave the production environment, however also do not wish to restore historic files into the live database where they could conflict with production data without tested results, and also without configuring a different database within production. This application allows us to search and extract files from the backups directly.
 
 ```bash
-java -jar mongofiles-bsonreader.jar -c chunks.bson.gz -i fs.files.bson.gz --match "2022Report.*.csv" list
+java -jar mongofiles-bsonreader.jar -c chunks.bson.gz -f fs.files.bson.gz --match "2022Report.*.csv"
 ```
 
 In the example above, we simply deploy the jar file to the target environment and can run it anywhere a JVM is available.
 
 * Pass the `-c` (or `--chunks`) argument to specify where the chunks collection is.
-* Pass the `-i` (or `--index`) argument to specify where the index collection is. This is collection that keeps files.
+* Pass the `-f` (or `--files`) argument to specify where the files collection is. This is effectively the index for the chunks
 * You can optionally provide a `-m` (or `--match`) argument to search for a specific file or group of files. This is a regular expression match so, `--match "Reg*"` will match Regggg but not Rega. Use `.*` where required.
-* The final argument needs to be either the `list` command which lists files. (Use this first to santiy check things)
-* To extract a file from the backup use the `extract` command.
 
 ```bash
-java -jar mongofiles-bsonreader.jar -c chunks.bson.gz -i fs.files.bson.gz -w /home/phill extract
+java -jar mongofiles-bsonreader.jar -c chunks.bson.gz -f fs.files.bson.gz -w /home/phill -x
 ```
 
-* The `-w` (or `--write-dir`) argument specifies the directoty where the file should be written to. It will keep it's original name. If a value isn't provided, the value defaults to /tmp
-* If you run extract without the match argument it will match + extract all the files.
+* The `-x` (or `--extract`) flag tells the app to extract any files from the dump, effectively recovering them from the bson image.
+* The `-w` (or `--write-dir`) argument specifies the directory where the matching files should be written. Files keep their original name. If a value isn't provided, the app defaults to /tmp
 
 # Design
 
