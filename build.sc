@@ -15,7 +15,8 @@ object foo extends RootModule with ScalaModule {
     ivy"org.mongodb.scala::mongo-scala-driver:4.4.0".withDottyCompat(scalaVersion()),
     ivy"io.circe::circe-core:0.14.1",
     ivy"io.circe::circe-generic:0.14.1",
-    ivy"io.circe::circe-parser:0.14.1"
+    ivy"io.circe::circe-parser:0.14.1",
+    ivy"com.github.scopt::scopt:4.1.0"
   )
 
   object test extends ScalaTests {

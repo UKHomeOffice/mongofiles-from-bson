@@ -16,20 +16,3 @@ object Logger extends StrictLogging:
   def debug(msg :String) :Unit =
     logger.debug(msg)
 
-//object IOLogger extends StrictLogging:
-//
-//  val ioLogger = Slf4jLogger.create[IO]
-//
-//  def info(msg :String) :IO[Unit] =
-//    ioLogger.flatMap(_.info(msg))
-//
-//  // for use in for-yields
-//  def infoAR(msg :String) :EitherT[IO, String, Unit] =
-//    EitherT(ioLogger.flatMap(_.info(msg)).map { _ => Right(()) })
-//
-//  def error(msg :String) :IO[Unit] =
-//    ioLogger.flatMap(_.error(msg))
-//
-//  def debug(msg :String) :IO[Unit] =
-//    ioLogger.flatMap(_.debug(msg))
-//
