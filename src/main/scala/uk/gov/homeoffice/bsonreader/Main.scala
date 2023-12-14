@@ -3,6 +3,7 @@ package uk.gov.homeoffice.bsonreader
 import cats.effect.{IO, IOApp, Concurrent}
 import fs2.io.file.{Files => FS2Files, Path}
 
+import java.util.zip.GZIPInputStream
 import cats.data.*
 import cats.effect.*
 import cats.implicits.{*, given}
@@ -13,25 +14,11 @@ import java.nio.file.{Files => NioFiles, Paths}
 import cats.effect.unsafe.implicits.global
 import scopt.OParser
 
-
 object MainApp extends IOApp:
 
-  def uncompressor(stream :fs2.Stream[IO, Byte]) :fs2.Stream[IO, Byte] = {
-    stream.through(fs2.io.toInputStream)
-      .flatMap { inputStream => fs2.io.readInputStream(IO(Ungzip.ungzip(inputStream)), 512) }
-  }
-
-  def bsonStreamer(stream :fs2.Stream[IO, Byte]) :fs2.Stream[IO, Either[String, io.circe.Json]] = {
-    stream.through(fs2.io.toInputStream).flatMap { inputStream =>
-      fs2.Stream.repeatEval { BsonReader.nextBsonObject(inputStream) }.unNoneTerminate
-    }
-  }
-
   def bsonReader(filename :String) :fs2.Stream[IO, io.circe.Json] = {
-    val stream = FS2Files[IO].readAll(Path(filename))
-    val uncompressedStream = uncompressor(stream)
-    val bsonObjectStream = bsonStreamer(uncompressedStream)
-    bsonObjectStream
+    val inputStream = new BufferedInputSteam(GZIPInputStream(new BufferedInputStream(new FileInputStream(filename))))
+    fs2.Stream.repeatEval { BsonReader.nextBsonObject(inputStream) }.unNoneTerminate
       .collect { case Right(json) => json }
   }
 
