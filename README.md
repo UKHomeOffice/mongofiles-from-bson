@@ -1,5 +1,5 @@
 
-# mongofiles-bsonreader
+# mongofiles-from-bson
 
 Mongo database has supported storing files inside it's databases using a feature called GridFs. Users can use a mongofiles command to upload/download files between their computer and their Mongo server.
 
