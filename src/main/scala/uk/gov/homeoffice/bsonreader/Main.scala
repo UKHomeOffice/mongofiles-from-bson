@@ -17,7 +17,7 @@ import scopt.OParser
 object MainApp extends IOApp:
 
   def bsonReader(filename :String) :fs2.Stream[IO, io.circe.Json] = {
-    val inputStream = new BufferedInputSteam(GZIPInputStream(new BufferedInputStream(new FileInputStream(filename))))
+    val inputStream = new BufferedInputStream(GZIPInputStream(new BufferedInputStream(new FileInputStream(filename))))
     fs2.Stream.repeatEval { BsonReader.nextBsonObject(inputStream) }.unNoneTerminate
       .collect { case Right(json) => json }
   }
