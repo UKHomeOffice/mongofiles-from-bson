@@ -57,11 +57,12 @@ object MainApp extends IOApp:
       // matching to any fileIndexList, for performance
       bsonReader(appConfig.chunksFilename)
         .map { json => Chunk.chunkFromJson(json) }
+        .zipWithIndex
         .evalTap {
-          case Right(chunk) => IO(())
-          case err => IO(println(s"Filtering out an error in the chunk stream: $err"))
+          case (_, idx) if idx % 5000 == 0 => IO(println(s"chunks scanned $idx..."))
+          case _ => IO(())
         }
-        .collect { case Right(chunk) if fileIndexList.map(_.id).contains(chunk.fileId) =>
+        .collect { case (Right(chunk), _) if fileIndexList.map(_.id).contains(chunk.fileId) =>
           val file = fileIndexList.find(_.id == chunk.fileId).get // shouldn't fail given the check above
           (file, chunk)
         }
