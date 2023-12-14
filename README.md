@@ -35,8 +35,9 @@ mongodump --gzip -d mydb
 docker cp mongo:/dump /tmp
 
 # use our program to extract the files
+# (see the release tab)
 
-java -jar -c /tmp/dump/mydb/fs.chunks.bson.gz -f /tmp/dump/mydb/fs.files.bson.gz
+java -jar mongofiles-from-bson-v1.jar -c /tmp/dump/mydb/fs.chunks.bson.gz -f /tmp/dump/mydb/fs.files.bson.gz
 
             (example output)
             MATCHED: /tmp/testfile.txt (chunks: 1)
@@ -46,7 +47,7 @@ java -jar -c /tmp/dump/mydb/fs.chunks.bson.gz -f /tmp/dump/mydb/fs.files.bson.gz
 In the Home Office we do not wish our production data to leave the production environment, however also do not wish to restore historic files into the live database where they could conflict with production data without tested results, and also without configuring a different database within production. This application allows us to search and extract files from the backups directly.
 
 ```bash
-java -jar mongofiles-bsonreader.jar -c chunks.bson.gz -f fs.files.bson.gz --match "2022Report.*.csv"
+java -jar mongofiles-from-bson-v1.jar -c chunks.bson.gz -f fs.files.bson.gz --match "2022Report.*.csv"
 ```
 
 In the example above, we simply deploy the jar file to the target environment and can run it anywhere a JVM is available.
@@ -56,7 +57,7 @@ In the example above, we simply deploy the jar file to the target environment an
 * You can optionally provide a `-m` (or `--match`) argument to search for a specific file or group of files. This is a regular expression match so, `--match "Reg*"` will match Regggg but not Rega. Use `.*` where required.
 
 ```bash
-java -jar mongofiles-bsonreader.jar -c chunks.bson.gz -f fs.files.bson.gz -w /home/phill -x
+java -jar mongofiles-from-bson-v1.jar -c chunks.bson.gz -f fs.files.bson.gz -w /home/phill -x
 ```
 
 * The `-x` (or `--extract`) flag tells the app to extract any files from the dump, effectively recovering them from the bson image.
