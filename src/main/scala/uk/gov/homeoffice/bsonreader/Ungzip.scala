@@ -9,7 +9,7 @@ object Ungzip:
   def ungzip(gzippedStream :InputStream) :InputStream = {
     Try(GZIPInputStream(gzippedStream)).toEither match {
       case Left(error) =>
-        Logger.error(s"GZIP error: $error")
+        println(s"GZIP error: $error")
         throw new Exception(s"GZIP Broken Pipe: $error")
       case Right(uncompressedStream) =>
         uncompressedStream

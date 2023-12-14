@@ -13,19 +13,18 @@ import cats.effect.*
 object BsonReader:
   val bd = new BasicBSONDecoder()
 
-  def nextBsonObject(inputStream :InputStream) :IO[Either[String, Json]] = IO {
-    for {
-      bsonObject <- isToBson(inputStream)
-      jsonString <- toJson(bsonObject)
-    } yield { jsonString }
+  def nextBsonObject(inputStream :InputStream) :IO[Option[Either[String, Json]]] = IO {
+    Try(bd.readObject(inputStream)).toEither match {
+      case Right(bsonObj) => toJson(bsonObj) match {
+        case Right(jsonObj) => Some(Right(jsonObj))
+        case Left(err) => Some(Left(err))
+      }
+      case Left(exc) if Option(exc.getMessage()).isEmpty => None
+      case Left(exc) => Some(Left(s"Exception reading bson stream: $exc"))
+    }
   }
 
-  private def isToBson(is :InputStream): Either[String, BSONObject] = {
-    Try(bd.readObject(is)).toEither
-      .left.map { case ex => ex.getMessage }
-  }
-
-  private def toJson(bsonObject :BSONObject) :Either[String, Json] = {
+  def toJson(bsonObject :BSONObject) :Either[String, Json] = {
     val jsonString = BasicDBObject(bsonObject.toMap).toJson
     parse(jsonString).left.map { case ex => ex.getMessage }
   }
